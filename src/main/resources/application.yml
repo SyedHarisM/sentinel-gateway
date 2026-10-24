@@ -1,0 +1,146 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: sentinel-gateway
+
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+
+            # ============================
+            # ADMIN ROUTE
+            # ============================
+            - id: admin-service
+              uri: http://localhost:8082
+              predicates:
+                - Path=/admin/** 
+
+
+            # ============================
+            # AUTH SERVICE (PUBLIC)
+            # ============================
+            - id: auth-service
+              uri: lb://PRODUCT-SERVICE
+              predicates:
+                - Path=/auth/**
+
+            # ============================
+            # PRODUCT SERVICE
+            # ============================
+            - id: product-service
+              uri: lb://PRODUCT-SERVICE
+              predicates:
+                - Path=/api/products/**
+              filters:
+                 - name: CircuitBreaker
+                   args:
+                     name: productService
+                     fallbackUri: forward:/fallback/products
+
+
+            # ============================
+            # ORDER SERVICE
+            # ============================
+            - id: order-service
+              uri: http://localhost:8083
+              predicates:
+                - Path=/api/orders/**
+
+  data:
+    redis:
+      host: profound-cougar-170242.upstash.io
+      port: 6379
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: true
+
+# ============================
+# JWT Configuration
+# ============================
+jwt:
+  secret: ${JWT_SECRET}
+rbac:
+  enabled: true
+
+  default-action : DENY
+
+  rules:
+
+    - pattern: /admin/**
+      roles:
+        - ADMIN
+        - SUPER_ADMIN
+
+    - pattern: /manager/**
+      roles:
+        - MANAGER
+        - ADMIN
+        - SUPER_ADMIN
+
+    - pattern: /api/**
+      roles:
+        - USER
+        - MANAGER
+        - ADMIN
+        - SUPER_ADMIN
+rate-limit:
+  enabled: true
+  max-requests: 20
+  window-seconds: 60  
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+  instance:
+    prefer-ip-address: true        
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      productService:
+        failure-rate-threshold: 50
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+
+  bulkhead:
+     instances:
+      productService:
+        max-concurrent-calls: 5
+        max-wait-duration: 0ms     
+   
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+  endpoint:
+    health:
+      show-details: always
+
+
+    gateway: 
+      access: unrestricted
+
+  health:
+    circuitbreakers:
+      enabled: true
+
+  metrics:
+    tags:
+      application: ${spring.application.name} 
+        
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    com.example.sentinel_gateway: DEBUG
