@@ -8,7 +8,7 @@ Built with **Spring Cloud Gateway (WebFlux)**, the project brings cross-cutting 
 
 > **Status:** Engineering project / development prototype. The repository contains working implementations and configuration for the capabilities described below; full integration testing, security hardening, and production deployment have **not** been established.
 
-[**Portfolio**](https://www.syedharis.pro) · [**Selected Work**](https://www.syedharis.pro/work) · [**Contact**](https://www.syedharis.pro/contact)
+[**Portfolio**](https://www.syedharis.pro) · [**Sentinel Case Study**](https://www.syedharis.pro/work/sentinel-gateway) · [**Contact**](https://www.syedharis.pro/contact)
 
 ---
 
